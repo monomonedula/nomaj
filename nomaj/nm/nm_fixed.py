@@ -1,11 +1,10 @@
-from nomaj.maybe import Maybe, Just
+from nomaj.failable import Failable, Just
 from nomaj.nomaj import Nomaj, Req, Resp
 
 
 class NmFixed(Nomaj):
     def __init__(self, resp: Resp):
-        self._resp: Maybe[Resp] = Just(resp)
+        self._resp: Failable[Resp] = Just(resp)
 
-    async def act_on(self, request: Req) -> Maybe[Resp]:
+    async def act_on(self, request: Req) -> Failable[Resp]:
         return self._resp
-

@@ -5,7 +5,7 @@ from urllib.parse import ParseResult
 
 from multidict import MultiMapping
 
-from nomaj.maybe import Maybe
+from nomaj.failable import Failable
 
 
 class Body(ABC):
@@ -31,6 +31,5 @@ class Req:
 
 class Nomaj(ABC):
     @abstractmethod
-    async def act_on(self, request: Req) -> Maybe[Resp]:
+    async def act_on(self, request: Req) -> Failable[Resp]:
         pass
-

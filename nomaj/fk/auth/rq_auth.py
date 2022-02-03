@@ -4,7 +4,7 @@ from dataclasses import replace
 from nomaj.fk.auth.codecs.cc_plain import CcPlain
 from nomaj.fk.auth.identity import Identity, ANONYMOUS
 from nomaj.fk.auth.nm_auth import NmAuth
-from nomaj.maybe import Maybe, Just, err_
+from nomaj.failable import Failable, Just, err_
 from nomaj.nomaj import Req
 from nomaj.rq.rq_with_headers import rq_with_headers
 
@@ -13,7 +13,7 @@ class RqAuth(Req):
     identity: Identity
 
 
-def rq_authenticated(rq: Req, header: str = NmAuth.__name__) -> Maybe[RqAuth]:
+def rq_authenticated(rq: Req, header: str = NmAuth.__name__) -> Failable[RqAuth]:
     val: Optional[str] = rq.headers.getone(header, None)
     if val is None:
         identity = Just(ANONYMOUS)

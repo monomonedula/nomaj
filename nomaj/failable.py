@@ -4,7 +4,7 @@ from typing import TypeVar, Generic, Optional, cast, Any, Dict
 T = TypeVar("T")
 
 
-class Maybe(Generic[T]):
+class Failable(Generic[T]):
     @abstractmethod
     def value(self) -> T:
         pass
@@ -14,10 +14,8 @@ class Maybe(Generic[T]):
         pass
 
 
-class Just(Maybe[T]):
-    __slots__ = (
-        "_v",
-    )
+class Just(Failable[T]):
+    __slots__ = ("_v",)
 
     def __init__(self, v: T):
         self._v: T = v
@@ -29,10 +27,8 @@ class Just(Maybe[T]):
         return None
 
 
-class Err(Maybe[T]):
-    __slots__ = (
-        "_err",
-    )
+class Err(Failable[T]):
+    __slots__ = ("_err",)
 
     def __init__(self, err: Exception):
         self._err: Exception = err
@@ -48,7 +44,7 @@ X = TypeVar("X")
 Y = TypeVar("Y")
 
 
-def err_(e: Maybe[X]) -> Err[Y]:
+def err_(e: Failable[X]) -> Err[Y]:
     assert e.err()
     return cast(Err[Y], e)
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from nomaj.fk.auth.identity import Identity
-from nomaj.maybe import Maybe
+from nomaj.failable import Failable
 
 
 class Codec(ABC):
@@ -10,5 +10,5 @@ class Codec(ABC):
         pass
 
     @abstractmethod
-    def decode(self, raw: str) -> Maybe[Identity]:
+    def decode(self, raw: str) -> Failable[Identity]:
         pass

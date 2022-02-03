@@ -4,7 +4,7 @@ from urllib.parse import quote_plus, unquote_plus
 
 from nomaj.fk.auth.codecs.codec import Codec
 from nomaj.fk.auth.identity import Identity
-from nomaj.maybe import Maybe, Just, Err
+from nomaj.failable import Failable, Just, Err
 
 
 class CcPlain(Codec):
@@ -20,7 +20,7 @@ class CcPlain(Codec):
         ]
         return "".join(parts)
 
-    def decode(self, raw: str) -> Maybe[Identity]:
+    def decode(self, raw: str) -> Failable[Identity]:
         try:
             props: Dict[str, str] = {}
             parts: List[str] = raw.split(";")
