@@ -6,9 +6,9 @@ from nomaj.failable import Failable
 
 class Codec(ABC):
     @abstractmethod
-    def encode(self, identity: Identity) -> str:
+    def encode(self, identity: Identity) -> bytes:
         pass
 
     @abstractmethod
-    def decode(self, raw: str) -> Failable[Identity]:
+    def decode(self, raw: bytes) -> Failable[Identity]:
         pass

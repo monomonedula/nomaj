@@ -8,7 +8,7 @@ from nomaj.nomaj import Nomaj, Req, Resp
 from nomaj.rq.rq_without_headers import rq_without_headers
 
 
-class NmAuth(Nomaj):
+class NjAuth(Nomaj):
     """
     Authenticating muggle.
     """

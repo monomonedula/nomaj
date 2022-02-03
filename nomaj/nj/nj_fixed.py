@@ -1,10 +1,10 @@
-from nomaj.failable import Failable, Just
+from nomaj.failable import Failable, Ok
 from nomaj.nomaj import Nomaj, Req, Resp
 
 
-class NmFixed(Nomaj):
+class NjFixed(Nomaj):
     def __init__(self, resp: Resp):
-        self._resp: Failable[Resp] = Just(resp)
+        self._resp: Failable[Resp] = Ok(resp)
 
     async def act_on(self, request: Req) -> Failable[Resp]:
         return self._resp

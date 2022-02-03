@@ -1,13 +1,13 @@
 from nomaj.fk.auth.identity import ANONYMOUS
-from nomaj.fk.auth.nm_auth import NmAuth
+from nomaj.fk.auth.nj_auth import NjAuth
 from nomaj.fk.auth.rq_auth import rq_authenticated
 from nomaj.http_exception import HttpException
 from nomaj.failable import Failable, err_, Err
 from nomaj.nomaj import Nomaj, Req, Resp
 
 
-class NmSecure(Nomaj):
-    def __init__(self, nm: Nomaj, header: str = NmAuth.__name__):
+class NjSecure(Nomaj):
+    def __init__(self, nm: Nomaj, header: str = NjAuth.__name__):
         self._nm: Nomaj = nm
         self._header: str = header
 

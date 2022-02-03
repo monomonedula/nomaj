@@ -1,17 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 from urllib.parse import ParseResult
 
 from multidict import MultiMapping
 
+from nomaj.body import Body
 from nomaj.failable import Failable
-
-
-class Body(ABC):
-    @abstractmethod
-    async def read(self, nbytes: Optional[int] = None) -> bytes:
-        pass
 
 
 @dataclass(frozen=True)

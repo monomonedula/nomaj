@@ -14,7 +14,7 @@ class Failable(Generic[T]):
         pass
 
 
-class Just(Failable[T]):
+class Ok(Failable[T]):
     __slots__ = ("_v",)
 
     def __init__(self, v: T):

@@ -1,6 +1,6 @@
 from multidict import CIMultiDict
 
-from nomaj.http.app_basic import EmptyBody
+from nomaj.body import EmptyBody
 from nomaj.nomaj import Resp
 
 
