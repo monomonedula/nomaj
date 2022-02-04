@@ -10,10 +10,6 @@ from nomaj.rs.rs_text import rs_text
 
 
 class FkParams(Fork):
-    """
-    Fork by query params and their values, matched by regular expression.
-    This class is immutable and thread safe.
-    """
     def __init__(
         self,
         param: str,

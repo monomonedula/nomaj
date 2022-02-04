@@ -2,17 +2,17 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from urllib.parse import ParseResult
 
-from multidict import MultiMapping
+from multidict import MultiMapping, CIMultiDictProxy, CIMultiDict
 
-from nomaj.body import Body
+from nomaj.body import Body, EmptyBody
 from nomaj.failable import Failable
 
 
 @dataclass(frozen=True)
 class Resp:
     status: int
-    headers: MultiMapping[str]
-    body: Body
+    headers: MultiMapping[str] = CIMultiDictProxy(CIMultiDict())
+    body: Body = EmptyBody()
 
 
 @dataclass(frozen=True)
