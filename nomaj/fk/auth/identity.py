@@ -10,3 +10,7 @@ class Identity:
 
 
 ANONYMOUS = Identity("")
+
+
+def is_anon(idt: Identity) -> bool:
+    return idt.urn == ""
