@@ -11,11 +11,11 @@ class NjFork(Nomaj):
     def __init__(self, *forks: Fork):
         self._forks: Tuple[Fork, ...] = forks
 
-    async def act_on(self, request: Req) -> Failable[Resp]:
+    async def respond_to(self, request: Req) -> Failable[Resp]:
         for fork in self._forks:
             nj: Failable[Optional[Nomaj]] = fork.route(request)
             if nj.err():
                 return err_(nj)
             if nj.value() is not None:
-                return await nj.value().act_on(request)
+                return await nj.value().respond_to(request)
         raise HttpException(rs_with_status(404))

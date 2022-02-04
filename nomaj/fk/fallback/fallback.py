@@ -26,8 +26,8 @@ class NjFallback(Nomaj):
         self._nj: Nomaj = nj
         self._fb: Fallback = fb
 
-    async def act_on(self, request: Req) -> Failable[Resp]:
-        resp = await self._nj.act_on(request)
+    async def respond_to(self, request: Req) -> Failable[Resp]:
+        resp = await self._nj.respond_to(request)
         if resp.err():
             err = resp.err()
             if isinstance(err, HttpException):

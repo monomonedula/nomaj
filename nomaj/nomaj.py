@@ -25,5 +25,5 @@ class Req:
 
 class Nomaj(ABC):
     @abstractmethod
-    async def act_on(self, request: Req) -> Failable[Resp]:
+    async def respond_to(self, request: Req) -> Failable[Resp]:
         pass

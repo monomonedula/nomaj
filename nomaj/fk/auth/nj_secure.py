@@ -11,10 +11,10 @@ class NjSecure(Nomaj):
         self._nm: Nomaj = nm
         self._header: str = header
 
-    async def act_on(self, request: Req) -> Failable[Resp]:
+    async def respond_to(self, request: Req) -> Failable[Resp]:
         rq = rq_authenticated(request, self._header)
         if rq.err():
             return err_(rq)
         if rq.value() == ANONYMOUS:
             return Err(HttpException.from_status(401))
-        return await self._nm.act_on(request)
+        return await self._nm.respond_to(request)

@@ -7,8 +7,8 @@ class NjForward(Nomaj):
     def __init__(self, nj: Nomaj):
         self._nj: Nomaj = nj
 
-    async def act_on(self, request: Req) -> Failable[Resp]:
-        resp = await self._nj.act_on(request)
+    async def respond_to(self, request: Req) -> Failable[Resp]:
+        resp = await self._nj.respond_to(request)
         if not resp.err():
             return resp
         err = resp.err()

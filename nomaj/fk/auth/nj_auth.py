@@ -18,18 +18,18 @@ class NjAuth(Nomaj):
         self._pass: Pass = pss
         self._header: str = header or self.__class__.__name__
 
-    async def act_on(self, request: Req) -> Failable[Resp]:
+    async def respond_to(self, request: Req) -> Failable[Resp]:
         user: Failable[Identity] = await self._pass.enter(request)
         if user.err():
             return err_(user)
         if user != ANONYMOUS:
             return await self.act_identified_on(request, user.value())
-        return await self._nm.act_on(rq_without_headers(request, [self._header]))
+        return await self._nm.respond_to(rq_without_headers(request, [self._header]))
 
     async def act_identified_on(
         self, request: Req, identity: Identity
     ) -> Failable[Resp]:
-        response = await self._nm.act_on(
+        response = await self._nm.respond_to(
             rq_with_auth(
                 identity=identity,
                 header=self._header,

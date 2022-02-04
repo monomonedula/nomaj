@@ -20,7 +20,7 @@ class AppBasic:
                     await send({"type": "lifespan.shutdown.complete"})
                     return
         elif scope["type"] == "http":
-            maybe_resp: Failable[Resp] = await self._nomaj.act_on(
+            maybe_resp: Failable[Resp] = await self._nomaj.respond_to(
                 Req(
                     uri=scope["path"],
                     method=scope["method"],
