@@ -1,11 +1,13 @@
 import dataclasses
 from typing import Optional
+import http.client
+from abc import ABC, abstractmethod
 
-from mypy.typeshed.stdlib.abc import ABC, abstractmethod
-
-from nomaj.failable import Failable
+from nomaj.failable import Failable, Ok
 from nomaj.http_exception import HttpException
 from nomaj.nomaj import Req, Resp, Nomaj
+from nomaj.rs.rs_text import rs_text
+from nomaj.rs.rs_with_status import rs_with_status
 
 
 @dataclasses.dataclass(frozen=True)
@@ -36,3 +38,13 @@ class NjFallback(Nomaj):
                 code = 500
             resp = await self._fb.route(ReqFallback(request, resp.err(), code))
         return resp
+
+
+class FbStatus(Fallback):
+    async def route(self, req: ReqFallback) -> Failable[Optional[Resp]]:
+        t = http.client.responses[req.suggested_code]
+        return Ok(
+            rs_text(
+                f"{req.suggested_code} {t}", response=rs_with_status(req.suggested_code)
+            )
+        )

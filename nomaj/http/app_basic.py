@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from multidict import CIMultiDict, CIMultiDictProxy
 
 from nomaj.http_exception import HttpException
@@ -22,7 +24,7 @@ class AppBasic:
         elif scope["type"] == "http":
             maybe_resp: Failable[Resp] = await self._nomaj.respond_to(
                 Req(
-                    uri=scope["path"],
+                    uri=urlparse(scope["path"]),
                     method=scope["method"],
                     headers=CIMultiDictProxy(
                         CIMultiDict(
@@ -43,7 +45,7 @@ class AppBasic:
                     )
                 )
             else:
-                resp = maybe_resp
+                resp = maybe_resp.value()
             await _respond(resp, send)
 
 

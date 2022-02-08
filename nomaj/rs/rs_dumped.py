@@ -6,14 +6,17 @@ from nvelope import JSON, Compound, NvelopeError
 from nomaj.failable import Failable, Ok, Err
 from nomaj.nomaj import Resp
 from nomaj.body import BodyOf
+from nomaj.rs.rs_with_type import rs_json
 
 
 def rs_dumped(j: JSON, rs: Resp = Resp(status=200), dumps=json.dumps) -> Failable[Resp]:
     try:
         return Ok(
-            replace(
-                rs,
-                body=BodyOf(dumps(j)),
+            rs_json(
+                replace(
+                    rs,
+                    body=BodyOf(dumps(j)),
+                )
             )
         )
     except TypeError as e:

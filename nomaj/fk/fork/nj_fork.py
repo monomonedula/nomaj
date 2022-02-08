@@ -1,6 +1,6 @@
 from typing import Tuple, Optional
 
-from nomaj.failable import Failable, err_
+from nomaj.failable import Failable, err_, Err
 from nomaj.fork import Fork
 from nomaj.http_exception import HttpException
 from nomaj.nomaj import Nomaj, Req, Resp
@@ -18,4 +18,4 @@ class NjFork(Nomaj):
                 return err_(nj)
             if nj.value() is not None:
                 return await nj.value().respond_to(request)
-        raise HttpException(rs_with_status(404))
+        return Err(HttpException(rs_with_status(404)))

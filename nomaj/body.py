@@ -32,10 +32,10 @@ class BodyFromASGI(Body):
 
     async def read(self, nbytes: Optional[int] = None) -> bytes:
         async with self._lock:
-            buff = bytearray(nbytes)
+            buff = bytearray(nbytes or 0)
             async for chunk in self._chunks(nbytes):
                 buff.extend(chunk)
-            if len(buff) > nbytes:
+            if nbytes is not None and len(buff) > nbytes:
                 self._leftover = buff[nbytes:]
             return bytes(buff)
 
