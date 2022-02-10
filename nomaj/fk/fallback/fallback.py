@@ -1,4 +1,6 @@
 import dataclasses
+import logging
+from logging import Logger
 from typing import Optional
 import http.client
 from abc import ABC, abstractmethod
@@ -51,3 +53,23 @@ class FbStatus(Fallback):
                 f"{req.suggested_code} {t}", response=rs_with_status(req.suggested_code)
             )
         )
+
+
+class FbLog(Fallback):
+    def __init__(
+        self,
+        fb: Fallback,
+        logger: Logger = logging.getLogger(__name__),
+        level: int = logging.ERROR,
+    ):
+        self._logger: Logger = logger
+        self._level: int = level
+        self._fb: Fallback = fb
+
+    async def route(self, req: ReqFallback) -> Result[Optional[Resp], Exception]:
+        resp = await self._fb.route(req)
+        self._logger.log(
+            self._level,
+            f"Handled error: {req.err!r} caused by {req.req!r}. Result: {resp!r}",
+        )
+        return resp

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Mapping, Union
 
 from koda import Result, Ok, Err
-from nomaj.fk.fallback.fallback import NjFallback, FbStatus
+from nomaj.fk.fallback.fallback import NjFallback, FbStatus, FbLog
 from nomaj.fk.fork.fk_chain import FkChain
 from nomaj.fk.fork.fk_fixed import FkFixed
 from nomaj.fk.fork.fk_methods import FkMethods
@@ -14,6 +14,8 @@ from nomaj.nomaj import Nomaj, Req, Resp
 from nomaj.rq.json import json_of
 from nomaj.rs.rs_dumped import rs_dumped
 import sqlite3
+
+from nomaj.rs.rs_with_status import rs_with_status
 
 
 class Endpoint(ABC):
@@ -94,7 +96,9 @@ class EpHostsGetOne(Endpoint):
     ) -> Result[Resp, Exception]:
         extracted = self._host_id.extract(path_params)
         if isinstance(extracted, Err):
+            raise extracted.val
             return extracted
+        print("extracted: ", extracted)
         host_id = extracted.val
         row = (
             self._conn.cursor()
@@ -105,9 +109,7 @@ class EpHostsGetOne(Endpoint):
         )
         if row:
             return rs_dumped({"id": row[0], "host": row[1], "project_id": row[2]})
-        return rs_dumped(
-            {"error": "not found"},
-        )
+        return rs_dumped({"error": "not found"}, rs_with_status(404))
 
     def method(self) -> Optional[str]:
         return "GET"
@@ -167,6 +169,6 @@ app = AppBasic(
                 ),
             ),
         ),
-        FbStatus(),
+        FbLog(FbStatus()),
     )
 )

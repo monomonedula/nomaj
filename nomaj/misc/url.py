@@ -30,10 +30,10 @@ class Regex:
     def __call__(self, segment: str) -> str:
         if segment.startswith("{"):
             if ":" in segment:
-                _, typ = segment.split(":")
+                _, typ = segment.strip("{}").split(":")
             else:
                 typ = "str"
-            return self._ttable[typ]
+            return f"({self._ttable[typ]})"
         else:
             return segment
 
@@ -56,25 +56,20 @@ class Path:
         p: str,
         trailing_slash_optional: bool = False,
         prefix: bool = False,
-        path_converter: Regex = Regex(),
+        regex: Regex = Regex(),
     ):
         self._p: str = "/" + p.strip("/") + "/" if p.strip("/") else "/"
         self._trailing_slash_optional = trailing_slash_optional
         self._pattern = re.compile(
             "^/"
-            + "/".join(
-                [
-                    path_converter(segment.strip("{}"))
-                    for segment in p.split("/")
-                    if segment
-                ]
-            )
+            + "/".join([regex(segment) for segment in p.split("/") if segment])
             + ("/?" if trailing_slash_optional else "/")
             + ("" if prefix else "$")
         )
         self.params = tuple(
             [name.strip("{}") for name in p.split("/") if name.startswith("{")]
         )
+        self.param_names = [p.split(":")[0] for p in self.params]
 
     def matches(self, p: str):
         return bool(self._pattern.match(p))
@@ -90,7 +85,7 @@ class Path:
         return Ok(
             {
                 name: value
-                for name, value in zip(self.params, self._pattern.findall(p.strip("/")))
+                for name, value in zip(self.param_names, self._pattern.findall(p))
             }
         )
 
@@ -109,7 +104,9 @@ class PathParam(Generic[_T]):
     def extract(self, params: Mapping[str, str]) -> Result[_T, Exception]:
         val = params.get(self._name)
         if val is None:
-            return Err(ValueError(f"Missing parameter {val!r} in {params}"))
+            return Err(
+                ValueError(f"Missing parameter {self._name!r} in path params {params}")
+            )
         return Ok(self._as_type(val))
 
     def name(self):
