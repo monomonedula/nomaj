@@ -1,4 +1,6 @@
+import dataclasses
 import re
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Callable, Mapping, Optional
 from urllib.parse import ParseResult
 
@@ -50,7 +52,17 @@ class Regex:
 _T = TypeVar("_T")
 
 
-class Path:
+class Path(ABC):
+    @abstractmethod
+    def path_params_of(self, p: str) -> Result[Mapping[str, str], Exception]:
+        pass
+
+    @abstractmethod
+    def matches(self, p: str) -> bool:
+        pass
+
+
+class PathSimple(Path):
     def __init__(
         self,
         p: str,
@@ -71,11 +83,11 @@ class Path:
         )
         self.param_names = [p.split(":")[0] for p in self.params]
 
-    def matches(self, p: str):
+    def matches(self, p: str) -> bool:
         return bool(self._pattern.match(p))
 
-    def with_postfix(self, sp: str, trailing_slash_optional: bool = False) -> "Path":
-        return Path(self._p + sp.strip("/"), trailing_slash_optional)
+    def with_postfix(self, sp: str, trailing_slash_optional: bool = False) -> "PathSimple":
+        return PathSimple(self._p + sp.strip("/"), trailing_slash_optional=trailing_slash_optional)
 
     def path_params_of(self, p: str) -> Result[Mapping[str, str], Exception]:
         if not self.matches(p):
@@ -92,8 +104,11 @@ class Path:
     def __str__(self):
         return f"{self.__class__.__name__}[{self._p}, {self._pattern}]"
 
-    def as_prefix(self):
-        return Path(self._p, self._trailing_slash_optional, prefix=True)
+    def as_prefix(self) -> "PathSimple":
+        return PathSimple(self._p, self._trailing_slash_optional, prefix=True)
+
+    def as_end(self) -> "PathSimple":
+        return PathSimple(self._p, self._trailing_slash_optional, prefix=False)
 
 
 class PathParam(Generic[_T]):

@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Mapping, Union
+import sqlite3
 
 from koda import Result, Ok, Err
+
 from nomaj.fk.fallback.fallback import NjFallback, FbStatus, FbLog
 from nomaj.fk.fork.fk_chain import FkChain
 from nomaj.fk.fork.fk_fixed import FkFixed
@@ -9,12 +11,10 @@ from nomaj.fk.fork.fk_methods import FkMethods
 from nomaj.fk.fork.nj_fork import NjFork
 from nomaj.fork import Fork
 from nomaj.http.app_basic import AppBasic
-from nomaj.misc.url import Path, PathParam
+from nomaj.misc.url import Path, PathParam, PathSimple
 from nomaj.nomaj import Nomaj, Req, Resp
 from nomaj.rq.json import json_of
 from nomaj.rs.rs_dumped import rs_dumped
-import sqlite3
-
 from nomaj.rs.rs_with_status import rs_with_status
 
 
@@ -96,9 +96,7 @@ class EpHostsGetOne(Endpoint):
     ) -> Result[Resp, Exception]:
         extracted = self._host_id.extract(path_params)
         if isinstance(extracted, Err):
-            raise extracted.val
             return extracted
-        print("extracted: ", extracted)
         host_id = extracted.val
         row = (
             self._conn.cursor()
@@ -148,7 +146,7 @@ conn.execute("CREATE TABLE IF NOT EXISTS hosts (host TEXT, project_id TEXT)")
 conn.commit()
 
 
-hosts_path = Path("/hosts/")
+hosts_path = PathSimple("/hosts/")
 
 
 app = AppBasic(
