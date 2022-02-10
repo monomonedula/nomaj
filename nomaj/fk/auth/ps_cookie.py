@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
+
 from nomaj.fk.auth.codecs.codec import Codec
-from nomaj.fk.auth.identity import Identity, ANONYMOUS
+from nomaj.fk.auth.identity import Identity, ANONYMOUS, is_anon
 from nomaj.fk.auth.ps import Pass
 from nomaj.misc.cookies import cookies_of
 from nomaj.misc.expires import Date
@@ -25,20 +26,20 @@ class PsCookie(Pass):
         self._name: str = (name or self.__class__.__name__).strip()
         self._days: int = days
 
-    async def enter(self, request: Req) -> Failable[Identity]:
+    async def enter(self, request: Req) -> Result[Identity, Exception]:
         value: Optional[str] = cookies_of(request).get(self._name)
         if value is not None:
-            return self._codec.decode(value)
-        return ANONYMOUS
+            return self._codec.decode(value.encode())
+        return Ok(ANONYMOUS)
 
-    async def exit(self, response: Resp, identity: Identity) -> Failable[Resp]:
+    async def exit(self, response: Resp, identity: Identity) -> Result[Resp, Exception]:
         """
         Adds authentication cookie to the response
         """
-        if identity == ANONYMOUS:
+        if is_anon(identity):
             text = ""
         else:
-            text = self._codec.encode(identity)
+            text = self._codec.encode(identity).decode()
         return Ok(
             rs_with_cookie(
                 response,

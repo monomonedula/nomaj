@@ -3,7 +3,7 @@ from typing import Optional, Union, Collection
 from werkzeug.datastructures import MIMEAccept
 from werkzeug.http import parse_accept_header
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
 from nomaj.nomaj import Nomaj, Resp, Req
@@ -14,7 +14,7 @@ class FkContentType(Fork):
         self._nj: Nomaj = NjFixed(resp) if isinstance(resp, Resp) else resp
         self._ctypes: Collection[str] = types
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         if request.headers.get("Content-Type"):
             if parse_accept_header(
                 request.headers.get("Content-Type", "*/*"), MIMEAccept

@@ -3,7 +3,7 @@ from typing import Optional, Union, List
 
 from werkzeug.http import parse_accept_header
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
 from nomaj.nomaj import Nomaj, Resp, Req
@@ -14,7 +14,7 @@ class FkEncoding(Fork):
         self._nj: Nomaj = NjFixed(resp) if isinstance(resp, Resp) else resp
         self._encoding: str = encoding.strip()
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         headers: Optional[List[str]] = request.headers.getall("accept-encoding")
         if (
             not headers

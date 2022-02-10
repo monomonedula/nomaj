@@ -1,9 +1,9 @@
 from typing import Optional
 
-from nomaj.failable import Failable, Ok, err_
-from nomaj.fk.auth.identity import Identity, ANONYMOUS
+from koda import Result, Ok, Err
+from nomaj.fk.auth.identity import is_anon
 from nomaj.fk.auth.nj_auth import NjAuth
-from nomaj.fk.auth.rq_auth import RqAuth, rq_authenticated
+from nomaj.fk.auth.rq_auth import rq_authenticated
 from nomaj.fork import Fork
 from nomaj.nomaj import Req, Nomaj
 
@@ -13,10 +13,10 @@ class FkAuthenticated(Fork):
         self._nj: Nomaj = nj
         self._header: str = header
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         f = rq_authenticated(request, self._header)
-        if f.err():
-            return err_(f)
-        if f.value() == ANONYMOUS:
+        if isinstance(f, Err):
+            return f
+        if is_anon(f.val.identity):
             return Ok(None)
         return Ok(self._nj)

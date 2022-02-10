@@ -2,7 +2,8 @@ import re
 from typing import Union, Pattern, Optional
 from urllib.parse import parse_qsl
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
+
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
 from nomaj.nomaj import Nomaj, Resp, Req
@@ -30,7 +31,7 @@ class FkParams(Fork):
         else:
             raise TypeError("Expected Response, Muggle or str. Got: %r" % type(resp))
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         for param, value in parse_qsl(request.uri.query):
             if param == self._param and self._pattern.match(value):
                 return Ok(self._nj)

@@ -1,7 +1,8 @@
 import re
 from typing import Union, Pattern, Optional
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
+
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
 from nomaj.nomaj import Nomaj, Resp, Req
@@ -23,7 +24,7 @@ class FkRegex(Fork):
         else:
             raise TypeError("Expected Response, Muggle or str. Got: %r" % type(resp))
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         if self._pattern.match(request.uri.path):
             return Ok(self._nj)
         return Ok(None)

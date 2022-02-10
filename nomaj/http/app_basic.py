@@ -1,9 +1,9 @@
 from urllib.parse import urlparse
 
 from multidict import CIMultiDict, CIMultiDictProxy
+from koda import Result, Err
 
 from nomaj.http_exception import HttpException
-from nomaj.failable import Failable
 from nomaj.nomaj import Nomaj, Req, Resp
 from nomaj.body import EmptyBody, BodyFromASGI
 
@@ -22,7 +22,7 @@ class AppBasic:
                     await send({"type": "lifespan.shutdown.complete"})
                     return
         elif scope["type"] == "http":
-            maybe_resp: Failable[Resp] = await self._nomaj.respond_to(
+            maybe_resp: Result[Resp, Exception] = await self._nomaj.respond_to(
                 Req(
                     uri=urlparse(scope["path"]),
                     method=scope["method"],
@@ -34,7 +34,8 @@ class AppBasic:
                     body=BodyFromASGI(receive),
                 )
             )
-            if err := maybe_resp.err():
+            if isinstance(maybe_resp, Err):
+                err = maybe_resp.val
                 resp = (
                     err.response
                     if isinstance(err, HttpException)
@@ -45,7 +46,7 @@ class AppBasic:
                     )
                 )
             else:
-                resp = maybe_resp.value()
+                resp = maybe_resp.val
             await _respond(resp, send)
 
 

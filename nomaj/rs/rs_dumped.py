@@ -1,15 +1,18 @@
 import json
 from dataclasses import replace
+from typing import Union
 
+from koda import Result, Err, Ok
 from nvelope import JSON, Compound, NvelopeError
 
-from nomaj.failable import Failable, Ok, Err
 from nomaj.nomaj import Resp
 from nomaj.body import BodyOf
 from nomaj.rs.rs_with_type import rs_json
 
 
-def rs_dumped(j: JSON, rs: Resp = Resp(status=200), dumps=json.dumps) -> Failable[Resp]:
+def rs_dumped(
+    j: JSON, rs: Resp = Resp(status=200), dumps=json.dumps
+) -> Result[Resp, Exception]:
     try:
         return Ok(
             rs_json(
@@ -25,7 +28,7 @@ def rs_dumped(j: JSON, rs: Resp = Resp(status=200), dumps=json.dumps) -> Failabl
 
 def rs_nvelope_dumped(
     nvlp: Compound, rs: Resp = Resp(status=200), dumps=json.dumps
-) -> Failable[Resp]:
+) -> Result[Resp, Union[NvelopeError, TypeError]]:
     try:
         j = nvlp.as_json()
     except NvelopeError as e:

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from nomaj.failable import Failable
+from koda import Result
+
 from nomaj.nomaj import Req, Nomaj
 
 
 class Fork(ABC):
     @abstractmethod
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         pass

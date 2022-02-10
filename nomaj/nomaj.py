@@ -5,7 +5,7 @@ from urllib.parse import ParseResult
 from multidict import MultiMapping, CIMultiDictProxy, CIMultiDict
 
 from nomaj.body import Body, EmptyBody
-from nomaj.failable import Failable
+from koda import Result
 
 
 @dataclass(frozen=True)
@@ -25,5 +25,5 @@ class Req:
 
 class Nomaj(ABC):
     @abstractmethod
-    async def respond_to(self, request: Req) -> Failable[Resp]:
+    async def respond_to(self, request: Req) -> Result[Resp, Exception]:
         pass

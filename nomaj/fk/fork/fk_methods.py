@@ -1,6 +1,7 @@
 from typing import Tuple, Union, Optional
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok
+
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
 from nomaj.nomaj import Nomaj, Resp, Req
@@ -17,7 +18,7 @@ class FkMethods(Fork):
         else:
             raise TypeError("Expected Response, Nomaj or str. Got: %r" % type(resp))
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         if request.method in self._methods:
             return Ok(self._nj)
         return Ok(None)

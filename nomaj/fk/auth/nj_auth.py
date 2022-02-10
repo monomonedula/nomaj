@@ -1,9 +1,10 @@
 from typing import Optional
 
-from nomaj.fk.auth.identity import Identity, ANONYMOUS
+from koda import Result, Err
+
+from nomaj.fk.auth.identity import Identity, is_anon
 from nomaj.fk.auth.ps import Pass
 from nomaj.fk.auth.rq_auth import rq_with_auth
-from nomaj.failable import Failable, err_
 from nomaj.nomaj import Nomaj, Req, Resp
 from nomaj.rq.rq_without_headers import rq_without_headers
 
@@ -18,17 +19,17 @@ class NjAuth(Nomaj):
         self._pass: Pass = pss
         self._header: str = header or self.__class__.__name__
 
-    async def respond_to(self, request: Req) -> Failable[Resp]:
-        user: Failable[Identity] = await self._pass.enter(request)
-        if user.err():
-            return err_(user)
-        if user != ANONYMOUS:
-            return await self.act_identified_on(request, user.value())
+    async def respond_to(self, request: Req) -> Result[Resp, Exception]:
+        user: Result[Identity, Exception] = await self._pass.enter(request)
+        if isinstance(user, Err):
+            return user
+        if is_anon(user.val):
+            return await self.act_identified_on(request, user.val)
         return await self._nm.respond_to(rq_without_headers(request, [self._header]))
 
     async def act_identified_on(
         self, request: Req, identity: Identity
-    ) -> Failable[Resp]:
+    ) -> Result[Resp, Exception]:
         response = await self._nm.respond_to(
             rq_with_auth(
                 identity=identity,
@@ -36,9 +37,9 @@ class NjAuth(Nomaj):
                 rq=rq_without_headers(request, [self._header]),
             )
         )
-        if response.err():
-            return err_(response)
+        if isinstance(response, Err):
+            return response
         return await self._pass.exit(
-            response=response.value(),
+            response=response.val,
             identity=identity,
         )

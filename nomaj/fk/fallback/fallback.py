@@ -3,7 +3,8 @@ from typing import Optional
 import http.client
 from abc import ABC, abstractmethod
 
-from nomaj.failable import Failable, Ok
+from koda import Result, Ok, Err
+
 from nomaj.http_exception import HttpException
 from nomaj.nomaj import Req, Resp, Nomaj
 from nomaj.rs.rs_text import rs_text
@@ -19,7 +20,7 @@ class ReqFallback:
 
 class Fallback(ABC):
     @abstractmethod
-    async def route(self, req: ReqFallback) -> Failable[Optional[Resp]]:
+    async def route(self, req: ReqFallback) -> Result[Optional[Resp], Exception]:
         pass
 
 
@@ -28,20 +29,22 @@ class NjFallback(Nomaj):
         self._nj: Nomaj = nj
         self._fb: Fallback = fb
 
-    async def respond_to(self, request: Req) -> Failable[Resp]:
-        resp = await self._nj.respond_to(request)
-        if resp.err():
-            err = resp.err()
+    async def respond_to(self, request: Req) -> Result[Resp, Exception]:
+        resp: Result[Resp, Exception] = await self._nj.respond_to(request)
+        if isinstance(resp, Err):
+            err = resp.val
             if isinstance(err, HttpException):
                 code = err.response.status
             else:
                 code = 500
-            resp = await self._fb.route(ReqFallback(request, resp.err(), code))
+            fb_resp = await self._fb.route(ReqFallback(request, err, code))
+            if not isinstance(fb_resp, Err) and fb_resp.val:
+                resp = Ok(fb_resp.val)
         return resp
 
 
 class FbStatus(Fallback):
-    async def route(self, req: ReqFallback) -> Failable[Optional[Resp]]:
+    async def route(self, req: ReqFallback) -> Result[Optional[Resp], Exception]:
         t = http.client.responses[req.suggested_code]
         return Ok(
             rs_text(

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
+from koda import Result
+
 from nomaj.fk.auth.identity import Identity
-from nomaj.failable import Failable
 
 
 class Codec(ABC):
@@ -10,5 +11,5 @@ class Codec(ABC):
         pass
 
     @abstractmethod
-    def decode(self, raw: bytes) -> Failable[Identity]:
+    def decode(self, raw: bytes) -> Result[Identity, Exception]:
         pass

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Mapping, Union
 
-from nomaj.failable import Failable, Ok, err_
+from koda import Result, Ok, Err
 from nomaj.fk.fallback.fallback import NjFallback, FbStatus
 from nomaj.fk.fork.fk_chain import FkChain
 from nomaj.fk.fork.fk_fixed import FkFixed
@@ -18,7 +18,9 @@ import sqlite3
 
 class Endpoint(ABC):
     @abstractmethod
-    async def respond_to(self, req: Req, path_params: Mapping[str, str]) -> Failable[Resp]:
+    async def respond_to(
+        self, req: Req, path_params: Mapping[str, str]
+    ) -> Result[Resp, Exception]:
         pass
 
     @abstractmethod
@@ -31,16 +33,17 @@ class FkEp(Fork):
         self._path = p
         self._fk: Fork
         if isinstance(resp, Endpoint):
-            self._fk = FkMethods(
-                resp.method(),
-                resp=NjEp(p, resp),
-            )
+            method = resp.method()
+            if method is None:
+                self._fk = FkFixed(NjEp(p, resp))
+            else:
+                self._fk = FkMethods(method, resp=NjEp(p, resp))
         elif isinstance(resp, Nomaj):
             self._fk = FkFixed(resp)
         else:
             self._fk = resp
 
-    def route(self, request: Req) -> Failable[Optional[Nomaj]]:
+    def route(self, request: Req) -> Result[Optional[Nomaj], Exception]:
         if self._path.matches(request.uri.path):
             return self._fk.route(request)
         return Ok(None)
@@ -54,18 +57,20 @@ class NjEp(Nomaj):
         self._e = e
         self._p = p
 
-    async def respond_to(self, request: Req) -> Failable[Resp]:
-        return await self._e.respond_to(
-            request,
-            self._p.path_params_of(request.uri.path).value()
-        )
+    async def respond_to(self, request: Req) -> Result[Resp, Exception]:
+        params = self._p.path_params_of(request.uri.path)
+        if isinstance(params, Err):
+            return params
+        return await self._e.respond_to(request, params.val)
 
 
 class EpHostsGetMany(Endpoint):
     def __init__(self, conn: sqlite3.Connection):
         self._conn: sqlite3.Connection = conn
 
-    async def respond_to(self, req: Req, path_params: Mapping[str, str]) -> Failable[Resp]:
+    async def respond_to(
+        self, req: Req, path_params: Mapping[str, str]
+    ) -> Result[Resp, Exception]:
         return rs_dumped(
             [
                 {"id": row[0], "host": row[1], "project_id": row[2]}
@@ -84,13 +89,19 @@ class EpHostsGetOne(Endpoint):
         self._conn: sqlite3.Connection = conn
         self._host_id: PathParam[int] = host_id
 
-    async def respond_to(self, req: Req, path_params: Mapping[str, str]) -> Failable[Resp]:
-        host_id = self._host_id.extract(path_params).value()
+    async def respond_to(
+        self, req: Req, path_params: Mapping[str, str]
+    ) -> Result[Resp, Exception]:
+        extracted = self._host_id.extract(path_params)
+        if isinstance(extracted, Err):
+            return extracted
+        host_id = extracted.val
         row = (
             self._conn.cursor()
-                .execute(
+            .execute(
                 "select rowid, host, project_id from hosts where rowid = ?", [host_id]
-            ).fetchone()
+            )
+            .fetchone()
         )
         if row:
             return rs_dumped({"id": row[0], "host": row[1], "project_id": row[2]})
@@ -106,20 +117,23 @@ class EpHostsPost(Endpoint):
     def __init__(self, conn: sqlite3.Connection):
         self._conn: sqlite3.Connection = conn
 
-    async def respond_to(self, req: Req, path_params: Mapping[str, str]) -> Failable[Resp]:
+    async def respond_to(
+        self, req: Req, path_params: Mapping[str, str]
+    ) -> Result[Resp, Exception]:
         j = await json_of(req)
-        if j.err():
-            return err_(j)
-        data = j.value()
+        if isinstance(j, Err):
+            return j
+        data = j.val
         c = self._conn.cursor()
         c.execute("INSERT INTO hosts VALUES (?, ?)", (data["host"], data["project_id"]))
         self._conn.commit()
         row = (
             self._conn.cursor()
-                .execute(
+            .execute(
                 "select rowid, host, project_id from hosts where rowid = ?",
                 [c.lastrowid],
-            ).fetchone()
+            )
+            .fetchone()
         )
         return rs_dumped({"id": row[0], "host": row[1], "project_id": row[2]})
 
@@ -143,22 +157,16 @@ app = AppBasic(
                 FkChain(
                     FkEp(
                         hosts_path.with_postfix("{host_id:int}"),
-                        EpHostsGetOne(conn, PathParam("host_id", int))
+                        EpHostsGetOne(conn, PathParam("host_id", int)),
                     ),
                     FkEp(
                         hosts_path,
                         EpHostsGetMany(conn),
                     ),
-                    FkEp(
-                        hosts_path,
-                        EpHostsPost(conn)
-                    )
-                )
+                    FkEp(hosts_path, EpHostsPost(conn)),
+                ),
             ),
         ),
         FbStatus(),
     )
 )
-
-
-

@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from typing import Tuple, Optional
 
 from nvelope import Obj, string_conv, datetime_timestamp_conv, NvelopeError
+from koda import Result, Err, Ok
 
-from nomaj.failable import Failable, Err, Caught, Ok
 from nomaj.fk.auth.identity import Identity, ANONYMOUS
 from nomaj.fk.auth.ps import Pass
+from nomaj.result import Caught
 from nomaj.rs.rs_with_body import rs_with_body
 from nomaj.rs.rs_with_type import rs_json
 from nomaj.fk.auth.signature import Signature
@@ -105,7 +106,7 @@ class JwtEntry(ABC):
         pass
 
     @abstractmethod
-    def enter(self, raw_token: str) -> Failable[Identity]:
+    def enter(self, raw_token: str) -> Result[Identity, Exception]:
         pass
 
 
@@ -133,7 +134,7 @@ class JwtEntrySimple:
         )
         return Jwt(header, payload, encoded=token_b64(self._signature, header, payload))
 
-    async def enter(self, raw_token: str) -> Failable[Identity]:
+    async def enter(self, raw_token: str) -> Result[Identity, Exception]:
         try:
             header, payload, signature_bytes = raw_token.split(".")
         except ValueError as e:
@@ -197,13 +198,13 @@ class PsToken(Pass):
         self._entry: JwtEntry = entry
         self._header: str = header
 
-    async def enter(self, request: Req) -> Failable[Identity]:
+    async def enter(self, request: Req) -> Result[Identity, Exception]:
         for v in request.headers.getall(self._header):
             if v.strip().startswith("Bearer"):
                 return self._entry.enter(v.split("Bearer")[1].strip())
         return Ok(ANONYMOUS)
 
-    async def exit(self, response: Resp, identity: Identity) -> Failable[Resp]:
+    async def exit(self, response: Resp, identity: Identity) -> Result[Resp, Exception]:
         token = self._entry.new_token(identity, iat=datetime.utcnow())
         return Ok(rs_json(rs_with_body(response, json.dumps({"jwt": token.encoded}))))
 

@@ -2,9 +2,10 @@ from types import MappingProxyType
 from typing import Dict, List
 from urllib.parse import quote_plus, unquote_plus
 
+from koda import Result, Ok, Err
+
 from nomaj.fk.auth.codecs.codec import Codec
 from nomaj.fk.auth.identity import Identity
-from nomaj.failable import Failable, Ok, Err
 
 
 class CcPlain(Codec):
@@ -20,7 +21,7 @@ class CcPlain(Codec):
         ]
         return b"".join(p.encode() for p in parts)
 
-    def decode(self, raw: bytes) -> Failable[Identity]:
+    def decode(self, raw: bytes) -> Result[Identity, Exception]:
         try:
             rawstr = raw.decode()
             props: Dict[str, str] = {}
