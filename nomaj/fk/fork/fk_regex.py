@@ -28,3 +28,12 @@ class FkRegex(Fork):
         if self._pattern.match(request.uri.path):
             return Ok(self._nj)
         return Ok(None)
+
+    def meta(self):
+        return {
+            "fork": {
+                "type": self.__class__.__name__,
+                "pattern": self._pattern.pattern,
+            },
+            "children": [self._nj.meta()],
+        }

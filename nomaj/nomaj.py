@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Dict
 from urllib.parse import ParseResult
 
 from multidict import MultiMapping, CIMultiDictProxy, CIMultiDict
+from nvelope import JSON
 
 from nomaj.body import Body, EmptyBody
 from koda import Result
@@ -26,4 +28,8 @@ class Req:
 class Nomaj(ABC):
     @abstractmethod
     async def respond_to(self, request: Req) -> Result[Resp, Exception]:
+        pass
+
+    @abstractmethod
+    def meta(self) -> Dict[str, JSON]:
         pass

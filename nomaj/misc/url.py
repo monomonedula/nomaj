@@ -1,10 +1,11 @@
 import dataclasses
 import re
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Callable, Mapping, Optional
+from typing import TypeVar, Generic, Callable, Mapping, Optional, Dict, Tuple
 from urllib.parse import ParseResult
 
 from koda import Ok, Result, Err
+from nvelope import JSON
 
 
 def href(p: ParseResult) -> str:
@@ -61,6 +62,28 @@ class Path(ABC):
     def matches(self, p: str) -> bool:
         pass
 
+    @abstractmethod
+    def raw(self) -> str:
+        pass
+
+    @abstractmethod
+    def meta(self) -> Dict[str, JSON]:
+        pass
+
+    @abstractmethod
+    def params(self) -> Tuple[str, ...]:
+        pass
+
+    @abstractmethod
+    def param_names(self) -> Tuple[str, ...]:
+        pass
+
+
+@dataclasses.dataclass
+class ParamMeta:
+    schema: Dict[str, JSON]
+    description: str
+
 
 class PathSimple(Path):
     def __init__(
@@ -78,16 +101,28 @@ class PathSimple(Path):
             + ("/?" if trailing_slash_optional else "/")
             + ("" if prefix else "$")
         )
-        self.params = tuple(
+        self._params = tuple(
             [name.strip("{}") for name in p.split("/") if name.startswith("{")]
         )
-        self.param_names = [p.split(":")[0] for p in self.params]
+        self._param_names = tuple([p.split(":")[0] for p in self._params])
+
+    def params(self) -> Tuple[str, ...]:
+        return self._params
+
+    def param_names(self) -> Tuple[str, ...]:
+        return self._param_names
 
     def matches(self, p: str) -> bool:
         return bool(self._pattern.match(p))
 
-    def with_postfix(self, sp: str, trailing_slash_optional: bool = False) -> "PathSimple":
-        return PathSimple(self._p + sp.strip("/"), trailing_slash_optional=trailing_slash_optional)
+    def with_postfix(
+        self,
+        sp: str,
+        trailing_slash_optional: bool = False,
+    ) -> "PathSimple":
+        return PathSimple(
+            self._p + sp.strip("/"), trailing_slash_optional=trailing_slash_optional
+        )
 
     def path_params_of(self, p: str) -> Result[Mapping[str, str], Exception]:
         if not self.matches(p):
@@ -97,7 +132,7 @@ class PathSimple(Path):
         return Ok(
             {
                 name: value
-                for name, value in zip(self.param_names, self._pattern.findall(p))
+                for name, value in zip(self.param_names(), self._pattern.findall(p))
             }
         )
 
@@ -109,6 +144,38 @@ class PathSimple(Path):
 
     def as_end(self) -> "PathSimple":
         return PathSimple(self._p, self._trailing_slash_optional, prefix=False)
+
+    def raw(self) -> str:
+        return self._p
+
+    def meta(self) -> Dict[str, JSON]:
+        arr = []
+        for param in self.params():
+            name, typ = param.split(":")
+            info = ParamMeta(
+                {
+                    "int": {"type": "integer"},
+                    "str": {"type": "string"},
+                    "slug": {"type": "string"},
+                    "uuid": {"type": "string"},
+                    "path": {"type": "string"},
+                }.get(typ, "string"),
+                "",
+            )
+            arr.append(
+                {
+                    "name": name,
+                    "in": "path",
+                    "required": True,
+                    "description": info.description,
+                    "schema": info.schema,
+                }
+            )
+
+        return {
+            "parameters": arr,
+            "path": path_to_swagger(self.raw()),
+        }
 
 
 class PathParam(Generic[_T]):
@@ -126,3 +193,21 @@ class PathParam(Generic[_T]):
 
     def name(self):
         return self._name
+
+
+def path_to_swagger(p: str) -> str:
+    if p.strip("/"):
+        return (
+            "/"
+            + "/".join(
+                [
+                    "{" + part.strip("{}").split(":")[0] + "}"
+                    if part.startswith("{")
+                    else part
+                    for part in p.split("/")
+                    if part
+                ]
+            )
+            + "/"
+        )
+    return "/"

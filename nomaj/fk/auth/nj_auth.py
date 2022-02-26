@@ -43,3 +43,12 @@ class NjAuth(Nomaj):
             response=response.val,
             identity=identity,
         )
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "nomaj": {
+                "type": self.__class__.__name__,
+                "pass": self._pass.meta(),
+            },
+            "children": [],
+        }

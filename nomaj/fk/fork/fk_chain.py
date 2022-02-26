@@ -1,6 +1,7 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 from koda import Result, Ok, Err
+from nvelope import JSON
 
 from nomaj.fork import Fork
 from nomaj.nomaj import Req, Nomaj
@@ -16,3 +17,11 @@ class FkChain(Fork):
             if isinstance(rs, Err) or rs.val is not None:
                 return rs
         return Ok(None)
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "fork": {
+                "type": self.__class__.__name__,
+            },
+            "children": [f.meta() for f in self._forks],
+        }

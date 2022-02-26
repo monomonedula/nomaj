@@ -1,8 +1,9 @@
 import re
-from typing import Union, Pattern, Optional
+from typing import Union, Pattern, Optional, Dict
 from urllib.parse import parse_qsl
 
 from koda import Result, Ok
+from nvelope import JSON
 
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
@@ -36,3 +37,13 @@ class FkParams(Fork):
             if param == self._param and self._pattern.match(value):
                 return Ok(self._nj)
         return Ok(None)
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "fork": {
+                "type": self.__class__.__name__,
+                "param": self._param,
+                "param_pattern": self._pattern.pattern,
+            },
+            "children": [self._nj.meta()],
+        }

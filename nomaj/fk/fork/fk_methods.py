@@ -1,6 +1,7 @@
-from typing import Tuple, Union, Optional
+from typing import Tuple, Union, Optional, Dict
 
 from koda import Result, Ok
+from nvelope import JSON
 
 from nomaj.fork import Fork
 from nomaj.nj.nj_fixed import NjFixed
@@ -22,3 +23,12 @@ class FkMethods(Fork):
         if request.method in self._methods:
             return Ok(self._nj)
         return Ok(None)
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "fork": {
+                "type": self.__class__.__name__,
+                "methods": list(self._methods),
+            },
+            "children": [self._nj.meta()],
+        }

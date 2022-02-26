@@ -1,11 +1,12 @@
 import dataclasses
 import logging
 from logging import Logger
-from typing import Optional
+from typing import Optional, Dict
 import http.client
 from abc import ABC, abstractmethod
 
 from koda import Result, Ok, Err
+from nvelope import JSON
 
 from nomaj.http_exception import HttpException
 from nomaj.nomaj import Req, Resp, Nomaj
@@ -23,6 +24,10 @@ class ReqFallback:
 class Fallback(ABC):
     @abstractmethod
     async def route(self, req: ReqFallback) -> Result[Optional[Resp], Exception]:
+        pass
+
+    @abstractmethod
+    def meta(self) -> Dict[str, JSON]:
         pass
 
 
@@ -44,6 +49,12 @@ class NjFallback(Nomaj):
                 resp = Ok(fb_resp.val)
         return resp
 
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "nomaj": {"type": self.__class__.__name__, "fallback": self._fb.meta()},
+            "children": [self._nj.meta()],
+        }
+
 
 class FbStatus(Fallback):
     async def route(self, req: ReqFallback) -> Result[Optional[Resp], Exception]:
@@ -53,6 +64,13 @@ class FbStatus(Fallback):
                 f"{req.suggested_code} {t}", response=rs_with_status(req.suggested_code)
             )
         )
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "fallback": {
+                "type": self.__class__.__name__,
+            }
+        }
 
 
 class FbLog(Fallback):
@@ -73,3 +91,10 @@ class FbLog(Fallback):
             f"Handled error: {req.err!r} caused by {req.req!r}. Result: {resp!r}",
         )
         return resp
+
+    def meta(self) -> Dict[str, JSON]:
+        return {
+            "fallback": {
+                "type": self.__class__.__name__,
+            }
+        }

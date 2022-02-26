@@ -1,6 +1,8 @@
 from abc import abstractmethod, ABC
+from typing import Dict
 
 from koda import Result
+from nvelope import JSON
 
 from nomaj.fk.auth.identity import Identity
 from nomaj.nomaj import Req, Resp
@@ -25,4 +27,8 @@ class Pass(ABC):
         """
         Maybe put some authentication credentials into the response.
         """
+        pass
+
+    @abstractmethod
+    def meta(self) -> Dict[str, JSON]:
         pass
